@@ -27,3 +27,4 @@ Health Inspection data (scores and reports) have varying availability/accessibil
 * http://people.hbs.edu/mluca/hygiene.pdf
 * https://rpubs.com/attarwala/restauranthygiene
 * http://www.kval.com/news/health/In-Tracking-Outbreaks-Of-Food-Poisoning-Can-Yelp-Help-335975901.html
+* http://www.washingtonpost.com/news/wonkblog/wp/2015/10/27/how-yelp-plans-to-clean-up-one-of-the-restaurant-industrys-most-dangerous-flaws/
