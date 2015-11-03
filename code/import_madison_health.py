@@ -1,3 +1,4 @@
+import pandas as pd
 from selenium import webdriver
 from bs4 import BeautifulSoup
 import re
@@ -75,13 +76,13 @@ def access_restaurant(browser, this_rest):
     soup = BeautifulSoup(browser.page_source)
 
     # Scrape inspection info if there are valid results:
-    insp_dict = scrape_inspections(soup)
+    insp_dict = scrape_inspections(browser, soup)
       
     # return to search results
     browser.find_element_by_id('MainContent_lnkBackToSearch').click()
     return insp_dict
 
-def scrape_inspections(soup):
+def scrape_inspections(browser, soup):
     if len(soup.findAll('label',attrs={'id':'MainContent_lblNoResults'})) > 0:
         return {}
     else:
@@ -160,6 +161,46 @@ def open_pickle(f_name):
     with open(f_name, 'rb') as f:
         data = pickle.load(f)
     return data
+
+#-------------------------
+# Clean up handful of cases with errors:
+
+## The 3rd chunk from search term 'a' was missing inspections for 6 restaurants
+def fix_a_2(browser):
+    # Read in data
+    R_2 = open_pickle('../data/mad/mad_health_2.pkl')
+    df_2 = pd.DataFrame.from_dict(R_2).T
+    
+    # These 6 restaurants had the following error message when trying to access the link
+    # to their inspection-level information:
+    #     Exception: Message: stale element reference: 
+    #                element is not attached to the page document
+    problem_list = ['Rodeway Inn & Suites', 'Chang Jiang', "Woodman's Food Market 20",
+                    'Walgreens 111', 'A-mart', 'The Spot Restaurant']
+    df_replace = df_2[df_2.name.isin(problem_list)]
+    
+    # Re-download all data for these files:
+    prob_dict = {}
+    
+    for term in problem_list:
+        if term == "Woodman's Food Market 20":
+            term = "Woodman's Food Market"
+        elif term == "Walgreens 111":
+            term = "Walgreens"
+            
+        restaurants = search_restaurants(browser, term)
+        prob_dict.update(restaurants)
+        print 'Term: %s    # New Restaurants: %d' % (term, len(restaurants))
+        
+    df_prob = pd.DataFrame.from_dict(prob_dict).T
+    
+    # Replace nan's with inspection dictionary that was just downloaded
+    R_2_final = R_2.copy()
+    for id_ in df_replace.index:
+        R_2_final[id_]['inspections'] = df_prob.loc[id_,'inspections']
+    
+    save_to_pickle(R_2_final, '../data/mad/mad_health_2_FINAL.pkl')
+
 
 if __name__ == '__main__':
     if len(argv) > 1:
