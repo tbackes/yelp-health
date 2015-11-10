@@ -125,11 +125,18 @@ def parse_address(x, neighborhood=None):
             x = re.sub(r'\n(%s)\n' % n, ' ', x)
 
     a = x.lower()
-    a = a.replace(' nv ', ' ')
+
+    # process wisconsin cities
+    cities = {'mc farland':'mcfarland', 'de forest':'deforest', 'cottage grove':'cottage_grove', 'sun prairie':'sun_prairie'}
+    for key, value in cities.iteritems():
+        a = re.sub(r'\n(%s, wi)\b' % key, '\n%s, wi' % value, a)
+
+    a = a.replace(' wi ', ' ')
     a = a.replace('-',' ')
-    a = re.sub('[%s]' % re.escape(string.punctuation.replace('&','')), '', a)#, flags=re.U)
+    #a = re.sub('[%s]' % re.escape(string.punctuation.replace('&','')), '', a)#, flags=re.U)
+    a = re.sub('[%s]' % re.escape(string.punctuation.replace('_','')), '', a)#, flags=re.U)
     a = re.sub(r'\b(and)\b',' & ', a)
-    
+
     # standardize cities (applies to phoenix)
     cities = ['queen creek', 'cave creek', 'fountain hills', 'casa grande', 'paradise valley', 'litchfield park', 'sun city']
     for c in cities:
@@ -139,12 +146,12 @@ def parse_address(x, neighborhood=None):
     abbr = {'road':'rd', 'street':'st', 'avenue':'av', 'ave':'av', 'drive':'dr', 'boulevard':'blvd',
             'lane':'ln', 'circle':'cir', 'building':'building', 'mount':'mt', 
             'n':'north', 'e':'east', 's':'south', 'w':'west', 'suite':'ste', 'bv':'blvd', 'suit':'ste',
-            'pky':'pkwy', 'parkway':'pkwy',
+            'pky':'pkwy', 'parkway':'pkwy', 'highway':'hwy', 
             'first':'1st', 'second':'2nd', 'third':'3rd', 'fourth':'4th', 'fifth':'5th', 'sixth':'6th',
             'seventh':'7th', 'eighth':'8th', 'ninth':'9th', 'tenth':'10th'}
     for key, value in abbr.iteritems():
         a = re.sub(r'\b(%s)\b' % key, value, a) 
-    
+
     address = {}
 
     # Check for complex:
@@ -152,6 +159,7 @@ def parse_address(x, neighborhood=None):
     
     words = a.split()
     
+    #### INTERSECTION NOT APPLICABLE IN WI
     # If address is an intersection
     if a.find('&') >= 0:
         address = address.update(parse_intersection(a))
@@ -179,12 +187,13 @@ def parse_address(x, neighborhood=None):
             a = address['city'].join(a[:-1])
         else:
             a = a[0]
-
+        
         # check for a suite before extracting the street
         if re.search(r'\b(ste)|(bldg)|(unit)\b',a):
             x = re.search(r'\b(ste)|(bldg)|(unit)\b', a)
-            address['street'] = a[:a.find(x.group())]
-            address['suite'] = a[a.find(x.group()):]
+            i = a.find(' '+x.group())
+            address['street'] = a[:i]
+            address['suite'] = a[i:]
         else:
             address['street'] = a
         
@@ -225,7 +234,7 @@ def fuzz_comparisons(x):
 
 def clean_name(x):
     stop_words_rest = {'restaurant','bar','lounge','grill','sushi','cafe','deli',
-                       'buffet','bakery','shop','grille'}
+                       'buffet','bakery','shop','grille','market'}
     for w in stop_words_rest:
         x = re.sub(r'\b(%s)\b' % w, '', x)
     x = x.strip()
