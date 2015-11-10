@@ -51,11 +51,11 @@ def parse_address(x, neighborhood=None):
     # strip neighborhood if necessary:
     if neighborhood is not None and len(neighborhood) > 0:
         for n in neighborhood:
-            print n
             x = re.sub(r'\n(%s)\n' % n, ' ', x)
 
     a = x.lower()
     a = a.replace(' nc ', ' ')
+    a = a.replace('-',' ')
     a = re.sub('[%s]' % re.escape(string.punctuation.replace('&','')), '', a)#, flags=re.U)
     a = re.sub(r'\b(and)\b',' & ', a)
     
@@ -66,6 +66,7 @@ def parse_address(x, neighborhood=None):
     
     # standardize common words
     abbr = {'road':'rd', 'street':'st', 'avenue':'av', 'ave':'av', 'drive':'dr', 'boulevard':'blvd',
+            'lane':'ln', 'circle':'cir', 'building':'building', 'mount':'mt', 
             'n':'north', 'e':'east', 's':'south', 'w':'west', 'suite':'ste', 'bv':'blvd', 'suit':'ste',
             'pky':'pkwy', 'parkway':'pkwy',
             'first':'1st', 'second':'2nd', 'third':'3rd', 'fourth':'4th', 'fifth':'5th', 'sixth':'6th',
@@ -77,9 +78,6 @@ def parse_address(x, neighborhood=None):
 
     # Check for complex:
     a, address = parse_complex(a)
-
-    # get rid of extra white spaces
-    a = re.sub(r'\s+', ' ', a)
     
     words = a.split()
     
@@ -103,27 +101,46 @@ def parse_address(x, neighborhood=None):
         
         # remove the number from the address, and split on the city
         a = re.sub(r'\b(%s)\b' % address['num'], '', a)
-        a = re.split(r'\b(%s)\b' % address['city'], a)[0]
+        a = re.split(r'\b%s\b' % address['city'], a)
+        
+        # sometimes the city appears in the street name, so re-combine everything prior to the last split:
+        if len(a) > 2:
+            a = address['city'].join(a[:-1])
+        else:
+            a = a[0]
 
         # check for a suite before extracting the street
-        if re.search(r'\b(ste)\b',a):
-            a = re.split(r'\b(ste)\b', a)
-            address['street'] = a[0].strip()
-            address['suite'] = a[2].strip()
+        if re.search(r'\b(ste)|(bldg)|(unit)\b',a):
+            x = re.search(r'\b(ste)|(bldg)|(unit)\b', a)
+            address['street'] = a[:a.find(x.group())]
+            address['suite'] = a[a.find(x.group()):]
         else:
-            address['street'] = a.strip()
-            
-        # fix addresses with missing spaces 
-        # (i.e. the 'N' or 'S' part of the street name was appended to the street number)
-        if (len(address['num']) > 0):
-            if (address['num'][-1] == 'n'):
-                address['num'] = address['num'][:-1]
-                address['street'] = 'north ' + address['street']
-            elif (address['num'][-1] == 's'):
-                address['num'] = address['num'][:-1]
-                address['street'] = 'south ' + address['street']
+            address['street'] = a
+        
+        address = strip_address_letters(address)
+        
+        # remove extra white spaces
+        for key, value in address.iteritems():
+            address[key] = re.sub(r'\s+', ' ', value).strip()
     
     return pd.Series(address)
+
+def strip_address_letters(address):
+    # fix addresses with letters
+    # (i.e. the 'N' or 'S' part of the street name was appended to the street number)
+    # (i.e. an a, b or c indicating a unit number)
+    if (len(address['num']) > 0):
+        num = address['num']
+        if (num[-1] == 'n'):
+            address['num'] = num[:-1]
+            address['street'] = 'north ' + address['street']
+        elif (num[-1] == 's'):
+            address['num'] = num[:-1]
+            address['street'] = 'south ' + address['street']
+        elif re.search(r'\D', num[-1]):
+            address['num'] = re.findall(r'\d+', num)[0]
+            address['suite'] = re.findall(r'\D+', num)[0] + address['suite']
+    return address
 
 
 def fuzz_comparisons(x):
