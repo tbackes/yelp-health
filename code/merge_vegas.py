@@ -122,12 +122,24 @@ def parse_address(x, neighborhood=None):
     # strip neighborhood if necessary:
     if neighborhood is not None and len(neighborhood) > 0:
         for n in neighborhood:
-            x = re.sub(r'\n(%s)\n' % n, ' ', x)
+            x = re.sub(r'\n(%s)\n' % n, ' \n', x)
 
     a = x.lower()
+    # process nevada cities
+    cities = {'n las vegas':'north_las_vegas', 'n. las vegas':'north_las_vegas', 
+              'north las vegas':'north_las_vegas'}
+    for key, value in cities.iteritems():
+        a = re.sub(r'\n(%s, wi)\b' % key, '\n%s, wi' % value, a)
+    cities = {'las vegas':'las_vegas', 'boulder city':'boulder_city', 'spring valley':'spring_valley', 
+              'nellis afb':'nellis_afb', 'summerlin south':'summerlin_south', 'clark county':'clark_county',
+              'green valley':'green_valley'}
+    for key, value in cities.iteritems():
+        a = re.sub(r'\n(%s, nv)\b' % key, '\n%s, nv' % value, a)
+
     a = a.replace(' nv ', ' ')
     a = a.replace('-',' ')
-    a = re.sub('[%s]' % re.escape(string.punctuation.replace('&','')), '', a)#, flags=re.U)
+    #a = re.sub('[%s]' % re.escape(string.punctuation.replace('&','').replace('_','')), '', a)#, flags=re.U)
+    a = re.sub('[%s]' % re.escape(string.punctuation.replace('_','')), '', a)#, flags=re.U)
     a = re.sub(r'\b(and)\b',' & ', a)
     
     # standardize cities (applies to phoenix)
@@ -139,7 +151,7 @@ def parse_address(x, neighborhood=None):
     abbr = {'road':'rd', 'street':'st', 'avenue':'av', 'ave':'av', 'drive':'dr', 'boulevard':'blvd',
             'lane':'ln', 'circle':'cir', 'building':'building', 'mount':'mt', 
             'n':'north', 'e':'east', 's':'south', 'w':'west', 'suite':'ste', 'bv':'blvd', 'suit':'ste',
-            'pky':'pkwy', 'parkway':'pkwy',
+            'pky':'pkwy', 'parkway':'pkwy', 'terrace':'terr', 'trail':'trl', 
             'first':'1st', 'second':'2nd', 'third':'3rd', 'fourth':'4th', 'fifth':'5th', 'sixth':'6th',
             'seventh':'7th', 'eighth':'8th', 'ninth':'9th', 'tenth':'10th'}
     for key, value in abbr.iteritems():
@@ -183,8 +195,9 @@ def parse_address(x, neighborhood=None):
         # check for a suite before extracting the street
         if re.search(r'\b(ste)|(bldg)|(unit)\b',a):
             x = re.search(r'\b(ste)|(bldg)|(unit)\b', a)
-            address['street'] = a[:a.find(x.group())]
-            address['suite'] = a[a.find(x.group()):]
+            i = a.find(' '+x.group())
+            address['street'] = a[:i]
+            address['suite'] = a[i:]
         else:
             address['street'] = a
         
