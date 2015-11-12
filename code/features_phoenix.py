@@ -37,19 +37,34 @@ def count_viol_type(x):
     c = len(re.findall('\W(c:)\W', x.lower()))
     return pd.Series({'n_priority':p, 'n_foundation':f, 'n_core':c})
 
+def v_count(df, V, col):
+    X = pd.Series(data=0, index = df.index)
+    Y = V[V[col] > 0].groupby(['id_','inspec_id']).count().reset_index(level=0)[col]
+    X[X.index.isin(Y.index)] = Y
+    return X
+
+def v_sum(df, V, col):
+    X = pd.Series(data=0, index = df.index)
+    Y = V[V[col] > 0].groupby(['id_','inspec_id']).sum().reset_index(level=0)[col]
+    X[X.index.isin(Y.index)] = Y
+    return X
+
 def get_AZ_violations(df):
     V = open_pickle('../data/phx/phoenix_V_full.pkl')
+    V['id_'] = V.permit_id
 
     V['type'] = V.comments.apply(viol_type)
     V = pd.concat([V, V.comments.apply(count_viol_type).set_index(V.index)], axis=1)
     
-    df['n_violations'] = V.groupby(['id_','inspec_id']).count().reset_index(level=0).code
-    df['v_core'] = V[V.n_core > 0].groupby(['id_','inspec_id']).count().reset_index(level=0).code
-    df['sum_core'] = V[V.n_core > 0].groupby(['id_','inspec_id']).sum().reset_index(level=0).code
-    df['v_foundation'] = V[V.n_foundation > 0].groupby(['id_','inspec_id']).count().reset_index(level=0).code
-    df['sum_foundation'] = V[V.n_foundation > 0].groupby(['id_','inspec_id']).sum().reset_index(level=0).code
-    df['v_priority'] = V[V.n_priority > 0].groupby(['id_','inspec_id']).count().reset_index(level=0).code
-    df['sum_priority'] = V[V.n_priority > 0].groupby(['id_','inspec_id']).sum().reset_index(level=0).code
+    df.index = df.inspec_id
+
+    df['n_violations'] = V.groupby(['id_','inspec_id']).count().reset_index(level=0)['code']
+    df['v_core'] = v_count(df, V, 'n_core')
+    df['sum_core'] = v_sum(df, V, 'n_core')
+    df['v_foundation'] = v_count(df, V, 'n_foundation')
+    df['sum_foundation'] = v_sum(df, V, 'n_foundation')
+    df['v_priority'] = v_count(df, V, 'n_priority')
+    df['sum_priority'] = v_sum(df, V, 'n_priority')
 
     return V, df
 
