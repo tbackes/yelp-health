@@ -1,6 +1,9 @@
 # yelp-health
 Linking Yelp Reviews to Safety Inspection Outcomes
 
+## City-Specific Pages
+- [Phoenix, AZ](https://github.com/tbackes/yelp-health/blob/master/summary_phoenix.md)
+
 ## Datasets
 ### Yelp Challenge Data
 Yelp Challenge Data is available for the following cities:
