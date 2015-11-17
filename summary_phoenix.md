@@ -44,7 +44,7 @@ model_log = LogisticRegression()
 model_svc = LinearSVC(C=0.19, random_state = 981, class_weight='balanced')
 ```
 
-With only basic features ``, we saw the following results:
+With only basic features `Review Count, Negative Review Count, Avg Rating, Avg Length of Review, Variance of Ratings`, we saw the following results:
 
 |              | FN   | FP   | TN   | TP   | accuracy | f1       | mse       | precision | recall   | model                  |
 |--------------|------|------|------|------|----------|----------|-----------|-----------|----------|----------------------- |
