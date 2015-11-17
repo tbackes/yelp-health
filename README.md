@@ -2,6 +2,7 @@
 Linking Yelp Reviews to Safety Inspection Outcomes
 
 ## City-Specific Pages
+To see more details on each city that was modeled, browse the following links:
 - [Phoenix, AZ](https://github.com/tbackes/yelp-health/blob/master/summary_phoenix.md)
 
 ## Datasets
