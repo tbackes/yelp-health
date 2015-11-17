@@ -43,7 +43,7 @@ def get_features_NV(df, min_date, city_tag, i_cols):
 ###############################################
 
 if __name__ == '__main__':
-    NV = open_pickle('../data/char/vegas_yelp_merge.pkl')
+    NV = open_pickle('../data/vegas/vegas_yelp_merge.pkl')
     df_NV = get_features_NV(NV, '1989-07-01', 'vegas', ['demerits','grade', 'n_violations'])
     save_to_pickle(df_NV, '../data/vegas/vegas_yelp_features.pkl')
 

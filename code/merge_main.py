@@ -34,8 +34,20 @@ def standard_name(x):
         x = x.split('#')[0]
     if x.find('@') > 0:
         x = x.split('@')[0]
+
+    # Insert space between lower-upper combos (McMan -> Mc Man; LaFiera -> La Fiera)
+    for w in re.findall(r'[a-z][A-Z]', x):
+        x = x.replace(w, w[0] + ' ' + w[1])
     
-    rep_list = {'-':' ', '/':' '}
+    # Convert upper-lower combos to all lower case (Rest -> rest; THis -> this)
+    for w in re.findall(r'[A-Z]+[a-z]',x):
+        x = x.replace(w, w.lower())
+
+    # Remove any spaces between initials (only detects upper case) (J D --> JD; S. S. E. -> S.S.E.) 
+    for w in re.findall(r'(?=([A-Z]\.? [A-Z]))', x):
+        x = x.replace(w, w.replace(' ',''))
+    
+    rep_list = {'-':' ', '/':' ', '&':' and '}
     sub_list = {'grille':'grill', 'ristorante':'restaurant','restaurante':'restaurant',
                 'italiano':'italian', 'mexicano':'mexican', 'mexicana':'mexican'}
     x = x.lower()
@@ -46,7 +58,9 @@ def standard_name(x):
     
     x = x.strip()
     x = re.sub(r'(\#\d+)\Z','',x)
-    x = re.sub(r'\bNo \d+\Z','',x)
+    x = re.sub(r'\bnumber\b',' no ',x)
+    x = re.sub(r'\bnum\b',' no ',x)
+    x = re.sub(r'\bno \d+\Z','',x)
     x = re.split(r'\b(at)\b', x)[0].strip()
     return re.sub('[%s]' % re.escape(string.punctuation), '', x)
 
@@ -81,7 +95,7 @@ def parse_complex(a):
 
 def address_abbr():
     return {'road':'rd', 'street':'st', 'avenue':'av', 'ave':'av', 'drive':'dr', 'boulevard':'blvd',
-            'lane':'ln', 'circle':'cir', 'building':'building', 'mount':'mt', 
+            'lane':'ln', 'circle':'cir', 'building':'building', 'mount':'mt', 'square':'sq',
             'n':'north', 'e':'east', 's':'south', 'w':'west', 'suite':'ste', 'bv':'blvd', 'suit':'ste',
             'pky':'pkwy', 'parkway':'pkwy', 'terrace':'terr', 'trail':'trl', 
             'first':'1st', 'second':'2nd', 'third':'3rd', 'fourth':'4th', 'fifth':'5th', 'sixth':'6th',
@@ -91,7 +105,8 @@ def standardize_cities(a):
     # standardize cities with different abbreviations/spellings
     cities = {'nv': {'n las vegas':'north_las_vegas', 'n. las vegas':'north_las_vegas', 
                      'north las vegas':'north_las_vegas'}, 
-              'wi': {'mc farland':'mcfarland', 'de forest':'deforest'}}
+              'wi': {'mc farland':'mcfarland', 'de forest':'deforest'},
+              'pa': {'mc kees rocks':'mkees_rocks'}}
     for state, city_list in cities.iteritems():
         for key, value in city_list.iteritems():
             a = re.sub(r'\n(%s, %s)\b' % (key, state), '\n%s, %s' % (value, state), a)
@@ -101,7 +116,8 @@ def standardize_cities(a):
                      'clark county', 'green valley'],
               'az': ['queen creek', 'cave creek', 'fountain hills', 'casa grande', 'paradise valley', 
                      'litchfield park', 'sun city'],
-              'wi': ['cottage grove', 'sun prairie']}
+              'wi': ['cottage grove', 'sun prairie'],
+              'pa': ['west mifflin', 'mount lebanon', 'mckees rocks', 'west homestead', 'castle shannon']}
     for state, city_list in cities.iteritems():
         for c in city_list:
             a = re.sub(r'\n(%s, %s)\b' % (c, state), '\n%s, %s' % (c.replace(' ','_'), state), a)
@@ -231,7 +247,7 @@ def get_yelp_businesses():
     return B
 
 
-def preprocess_yelp(B, state_abbr):
+def preprocess_yelp(B, state_abbr, ampersand=True):
     B_state = B[(B.state==state_abbr)& (B.categories.apply(lambda x: 'Restaurants' in x))]
     B_state['address'] = B_state.full_address.apply(lambda x: x.replace('\n',' ')\
                                                          .replace('Ste','Suite')\
@@ -239,7 +255,7 @@ def preprocess_yelp(B, state_abbr):
                                                          .replace(' %s ' % state_abbr, ' '))
     
     B_state['name_'] = B_state.name.apply(standard_name)
-    B_address = pd.Series(zip(B_state.full_address, B_state.neighborhoods)).apply(lambda x: parse_address(*x))
+    B_address = pd.Series(zip(B_state.full_address, B_state.neighborhoods)).apply(lambda x: parse_address(x[0],x[1],ampersand))
     B_address.set_index(B_state.index, inplace=True)
     col = B_address.columns.values
     col[0] = 'city_'
@@ -301,7 +317,7 @@ def to_int(x):
         out = np.nan
     return out
 
-def merge_partial_match(STATE, B_state, MERGE_prev, merge_level=0):
+def merge_partial_match(STATE, B_state, MERGE_prev, merge_level=0, dump_tag=None):
     if merge_level == 2:
         ind = ['num','street','city_','zip']
     elif merge_level == 3:
@@ -314,6 +330,10 @@ def merge_partial_match(STATE, B_state, MERGE_prev, merge_level=0):
     print merged.shape
 
     merged_fuzz = append_fuzz_scores(merged)
+
+    if dump_tag is not None:
+        merged_fuzz.to_csv('../data/pitt/merge_dump_%s.csv' % dump_tag, encoding='utf-8')
+
     ind_A = (merged_fuzz['max'] >= 75) & (merged_fuzz.avg_w_2 >= 75)
     ind_B = (merged_fuzz['max'] >= 60) & (merged_fuzz.avg_w_2 >= 60) & (merged_fuzz.avg_w_3 >= 80)
 
@@ -324,6 +344,39 @@ def merge_partial_match(STATE, B_state, MERGE_prev, merge_level=0):
         ind_D = (merged_fuzz.street == merged_fuzz.street) & \
                  (abs(merged_fuzz.num.apply(to_int) - merged_fuzz.numy_.apply(to_int)) <= 100)
         ind_merge = (ind_A | ind_B) & (ind_C | ind_D)
+
+    MERGE_partial = pd.concat([MERGE_prev, merged_fuzz[ind_merge]])
+
+    print MERGE_partial.shape
+    return MERGE_partial
+
+def merge_partial_match2(STATE, B_state, MERGE_prev, merge_level=0, dump_tag=None):
+    if merge_level == 2:
+        ind = ['num','street','city_','zip']
+    elif merge_level == 3:
+        ind = ['num','city_','zip']
+    elif merge_level == 4:
+        ind = ['street','city_','zip']
+
+    H_x = STATE[~STATE.id_.isin(MERGE_prev.id_)]
+    B_x = B_state[~B_state.business_id.isin(MERGE_prev.business_id)]
+
+    merged = merge_yelp_to_health(H_x, B_x, ind)
+    print merged.shape
+
+    merged_fuzz = append_fuzz_scores(merged)
+
+    if dump_tag is not None:
+        merged_fuzz.to_csv('../data/pitt/merge_dump_%s.csv' % dump_tag, encoding='utf-8')
+
+    ind_A = (merged_fuzz['max'] >= 75) & (merged_fuzz.avg_w_2 >= 75)
+    ind_B = (merged_fuzz['max'] >= 60) & (merged_fuzz.avg_w_2 >= 60) & (merged_fuzz.avg_w_3 >= 80)
+
+    if merge_level < 4:
+        ind_merge = ind_A | ind_B
+    elif merge_level == 4:
+        ind_C = abs(merged_fuzz.num.apply(to_int) - merged_fuzz.numy_.apply(to_int)) <= 100
+        ind_merge = (ind_A | ind_B) & ind_C 
 
     MERGE_partial = pd.concat([MERGE_prev, merged_fuzz[ind_merge]])
 

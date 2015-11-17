@@ -3,14 +3,17 @@ import numpy as np
 import pickle
 import re
 import string
-from merge_vegas import open_pickle, save_to_pickle
+from merge_main import open_pickle, save_to_pickle
 import features_main as lib
 
 pd.options.mode.chained_assignment = None  # default='warn'
 
 
-def get_AZ_inspections(df, drop_flag=True):
+def get_AZ_inspections(df, routine=False, drop_flag=True):
     I = open_pickle('../data/phx/phoenix_I_full.pkl')
+
+    if routine:
+        I = I[I.purpose == "Routine Inspection"]
 
     I[I.n_priority == 'NA'].n_priority = -1
     I['id_'] = I.permit_id
@@ -68,14 +71,15 @@ def get_AZ_violations(df):
 
     return V, df
 
-def get_features_AZ(df, min_date, city_tag, i_cols):
+def get_features_AZ(df, min_date, city_tag, i_cols, routine=False):
     if 'id_' not in df.columns:
         df['id_'] = df.permit_id
-    I = get_AZ_inspections(df)
+    I = get_AZ_inspections(df, routine=routine)
     V, I = get_AZ_violations(I)
     R = lib.state_yelp_reviews(df, min_date, city_tag)
     y, x = lib.merge_inspec_dates(I, df, R, i_cols)
     X = lib.summarize_reviews(x)
+    print X.info()
     return pd.merge(y, X, left_on=['inspec_id','business_id','id_'], right_index=True, how='inner')
 
 
@@ -84,7 +88,8 @@ def get_features_AZ(df, min_date, city_tag, i_cols):
 
 if __name__ == '__main__':
     AZ = open_pickle('../data/phx/phoenix_yelp_merge.pkl')
-    df_AZ = get_features_AZ(AZ, '2012-04-01', 'phoenix', ['n_priority', 'grade', 'n_violations','v_core','sum_core',
-                                                          'v_foundation','sum_foundation','v_priority','sum_priority'])
+    df_AZ = get_features_AZ(AZ, '2012-04-01', 'phoenix', ['n_priority', 'grade', 'purpose','n_violations',
+                                                          'v_core','sum_core','v_foundation','sum_foundation',
+                                                          'v_priority','sum_priority'])
     save_to_pickle(df_AZ, '../data/phx/phoenix_yelp_features.pkl')
 

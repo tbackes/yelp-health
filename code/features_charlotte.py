@@ -28,8 +28,9 @@ def get_features_NC(df, min_date, city_tag, i_cols):
 	I = get_NC_inspections(df)
 	R = lib.state_yelp_reviews(df, min_date, city_tag)
 	y, x = lib.merge_inspec_dates(I, df, R, i_cols)
+	print y.info()
 	X = lib.summarize_reviews(x)
-	return pd.merge(y, X, left_on=['inspec_id','business_id','id_'], right_index=True, how='inner')
+	return pd.merge(y, X, left_on=['inspec_id','business_id','id_'], right_index=True, how='outer')
 
 
 # -----------MAIN-----------------------------
@@ -38,5 +39,5 @@ def get_features_NC(df, min_date, city_tag, i_cols):
 if __name__ == '__main__':
 	NC = open_pickle('../data/char/charlotte_yelp_merge.pkl')
 	df_NC = get_features_NC(NC, '2011-06-30', 'charlotte', ['score','grade'])
-	save_to_pickle(df_NC, '../data/charlotte/charlote_yelp_features.pkl')
+	save_to_pickle(df_NC, '../data/char/charlotte_yelp_features.pkl')
 

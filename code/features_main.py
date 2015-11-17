@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import re
 import string
-from merge_vegas import open_pickle, save_to_pickle
+from merge_main import open_pickle, save_to_pickle
 from import_yelp_mongo import get_yelp_reviews, get_yelp_reviews_afterdate
 
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -31,6 +31,7 @@ def generate_inspec_dates(df):
     df_sort.date_start[~ind] = df_sort.date_start[~ind].apply(lambda x: pd.to_datetime(x) + pd.Timedelta('1 days'))
     df_sort.date_start = pd.to_datetime(df_sort.date_start)
     
+    df_sort.set_index('inspec_id', inplace=True)
     return df_sort[['date_start']]
 
 def merge_reviews_to_inspections(Y_WI, R_WI):
@@ -61,8 +62,11 @@ def summarize_reviews(x):
 	ct_list = ['text','negative_rating']
 	av_list = ['stars','review_length']
 	var_list = ['stars']
-	X = pd.concat([x_gp.count()[ct_list], x_gp.mean()[av_list], x_gp.var()[var_list]], axis=1)
-	X.columns = ['rev_ct','neg_ct','stars_avg','rev_len_avg','stars_var']
+	X = pd.concat([x_gp.count()[ct_list], x_gp.mean()[av_list], x_gp.var()[var_list], x_gp.text.apply(lambda x: ' '.join(x))], axis=1)
+	X.columns = ['rev_ct','neg_ct','stars_avg','rev_len_avg','stars_var','text']
 	X.stars_var.fillna(0, inplace=True)
+
+	#X['text'] = x_gp.text.apply(lambda x: ' ',join(x))
+	print X.info()
 	return X
 
