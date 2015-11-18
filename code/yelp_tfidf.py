@@ -39,7 +39,8 @@ def yelp_tfidf(df):
 
     return tfs, tfidf
 
-
+### LARA METHOD
+## Aspect Segmentation
 def preprocess_sentences(text):
     # tokenize into list of sentences
     sent_tokenize_list = sent_tokenize(text)
@@ -53,4 +54,31 @@ def preprocess_sentences(text):
 
     return sentences
 
-    
+def seed_aspect_keywords():
+    A = {'value': ['money', 'bill', 'value', 'price', 'cost', 'worth'],
+         'premise': ['music', 'environment','atmosphere', 'decor', 'space', 
+                     'bar', 'ambience', 'patio', 'room'],
+         'location': ['spot', 'neighborhood', 'location', 'located'],
+         'service': ['employee','professional','bartender', 'manager', 'hostess', 'owner', 'staff',
+                     'attention', 'server', 'service', 'waiter', 'waitress', 'waitstaff'],
+         'quality': ['portion', 'cook', 'quality', 'prepared', 'meal'],
+         'hygiene': ['toilet', 'bathroom', 'gloves', 'hair', 'floor', 'clean', 'poison', 'dirty'],
+         'food': ['menu', 'food', 'taste', 'flavor', 'meal', 'dish']
+        }
+
+    for key, value in A.iteritems():
+        A[key] = [stemmer.stem(w) for w in value]
+
+    return A
+
+def aspect_segmentation_bootstrap(df):
+    documents = df.text.apply(preprocess_sentences)
+
+    A = seed_aspect_keywords()
+
+    for d in documents:
+        for sentence in d:
+            break
+
+    return
+
