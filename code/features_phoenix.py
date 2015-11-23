@@ -88,8 +88,9 @@ def get_features_AZ(df, min_date, city_tag, i_cols, routine=False):
 
 if __name__ == '__main__':
     AZ = open_pickle('../data/phx/phoenix_yelp_merge.pkl')
-    df_AZ = get_features_AZ(AZ, '2012-04-01', 'phoenix', ['n_priority', 'grade', 'purpose','n_violations',
-                                                          'v_core','sum_core','v_foundation','sum_foundation',
-                                                          'v_priority','sum_priority'])
+    df_AZ = get_features_AZ(AZ, '2012-04-01', 'phoenix', 
+                            ['n_priority', 'grade', 'purpose', 'n_violations', 'v_core', 'sum_core',
+                             'v_foundation', 'sum_foundation', 'v_priority', 'sum_priority'], 
+                            routine=True)
     save_to_pickle(df_AZ, '../data/phx/phoenix_yelp_features.pkl')
 

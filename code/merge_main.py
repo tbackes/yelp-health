@@ -97,7 +97,7 @@ def address_abbr():
     return {'road':'rd', 'street':'st', 'avenue':'av', 'ave':'av', 'drive':'dr', 'boulevard':'blvd',
             'lane':'ln', 'circle':'cir', 'building':'building', 'mount':'mt', 'square':'sq',
             'n':'north', 'e':'east', 's':'south', 'w':'west', 'suite':'ste', 'bv':'blvd', 'suit':'ste',
-            'pky':'pkwy', 'parkway':'pkwy', 'terrace':'terr', 'trail':'trl', 
+            'pky':'pkwy', 'parkway':'pkwy', 'terrace':'terr', 'trail':'trl', 'place':'pl',
             'first':'1st', 'second':'2nd', 'third':'3rd', 'fourth':'4th', 'fifth':'5th', 'sixth':'6th',
             'seventh':'7th', 'eighth':'8th', 'ninth':'9th', 'tenth':'10th'}
 
@@ -367,7 +367,7 @@ def merge_partial_match2(STATE, B_state, MERGE_prev, merge_level=0, dump_tag=Non
     merged_fuzz = append_fuzz_scores(merged)
 
     if dump_tag is not None:
-        merged_fuzz.to_csv('../data/pitt/merge_dump_%s.csv' % dump_tag, encoding='utf-8')
+        merged_fuzz.to_csv('../data/dump/merge_dump_%s.csv' % dump_tag, encoding='utf-8')
 
     ind_A = (merged_fuzz['max'] >= 75) & (merged_fuzz.avg_w_2 >= 75)
     ind_B = (merged_fuzz['max'] >= 60) & (merged_fuzz.avg_w_2 >= 60) & (merged_fuzz.avg_w_3 >= 80)

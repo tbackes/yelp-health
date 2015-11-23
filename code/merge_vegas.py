@@ -79,8 +79,8 @@ if __name__ == '__main__':
 
     merge_level1 = lib.merge_exact_match(NV, B_NV)
     merge_level2 = lib.merge_partial_match(NV, B_NV, merge_level1, merge_level=2, dump_tag='vegas_32')
-    merge_level3 = lib.merge_partial_match(NV, B_NV, merge_level2, merge_level=3, dump_tag='vegas_33')
-    merge_level4 = lib.merge_partial_match(NV, B_NV, merge_level3, merge_level=4, dump_tag='vegas_34')
+    # merge_level3 = lib.merge_partial_match(NV, B_NV, merge_level2, merge_level=3, dump_tag='vegas_33')
+    # merge_level4 = lib.merge_partial_match(NV, B_NV, merge_level3, merge_level=4, dump_tag='vegas_34')
 
 
     merge_level2.to_csv('../data/vegas/merge_dump_22.csv', encoding='utf-8')

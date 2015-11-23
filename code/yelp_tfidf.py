@@ -74,14 +74,13 @@ def seed_aspect_keywords():
     return A.values(), A.keys()
 
 def chi_square(tf, aspects):
-    print 'C'
-    C = tf.sum(); print 'C1'
-    C1 = tf.T.dot(aspects); print 'C2'
-    C2 = tf.T.dot(aspects < 1); print 'C3'
+    C = tf.sum()
+    C1 = tf.T.dot(aspects)
+    C2 = tf.T.dot(aspects < 1)
     #C3 = (1-tf.T.todense()).dot(aspects); print 'C4'
     #C4 = (1-tf.T.todense()).dot(aspects < 1); print 'X2'
-    C3 = aspects.sum(axis = 0) - C1; print 'C4'
-    C4 = tf.shape[0] - C1 - C2 - C3; print 'X2'
+    C3 = aspects.sum(axis = 0) - C1
+    C4 = tf.shape[0] - C1 - C2 - C3
 
     X2 = (C * np.square(np.multiply(C1,C4) - np.multiply(C2,C3))) / \
             (np.multiply(np.multiply(np.multiply(C1+C3,C2+C4),C1+C2),C3+C4))
@@ -156,4 +155,4 @@ def aspect_segmentation_bootstrap(df, p=15, I=10, n=5):
         for row in A_new:
             print row
 
-    return A, aspect_labels, aspects, A_new, vocabulary, X2
+    return A, aspect_labels, aspects, A_new, vocabulary, sentences
