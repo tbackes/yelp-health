@@ -17,6 +17,7 @@ from sklearn.svm import LinearSVC, LinearSVR
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score,\
                             confusion_matrix, classification_report, mean_squared_error
 from sklearn.grid_search import GridSearchCV
+from sklearn.cross_validation import KFold
 import yelp_tfidf as lib_tfidf
 
 class HealthModel(object):
@@ -68,8 +69,11 @@ class HealthModel(object):
         # return X.values
         return np.hstack(X.values())
     
-    def save_metrics(self, y_pred, t):
-        y_true = self.get_target_gte(t=t, train=False)
+    def save_metrics(self, y_pred, t, rows=None):
+        if rows is None:
+            y_true = self.get_target_gte(t=t, train=False)
+        else:
+            y_true = self.get_target_gte(t=t)[rows[1]]
         d = {'accuracy': accuracy_score(y_true, y_pred),
              'precision': precision_score(y_true, y_pred), 
              'recall': recall_score(y_true, y_pred),
@@ -83,18 +87,26 @@ class HealthModel(object):
                  })
         return d
 
-    def train_classifier(self, model, col=None, tfs=False, tfs_h=False, t=2):
+    def train_classifier(self, model, col=None, tfs=False, tfs_h=False, t=2, rows=None):
         X_train = self.get_features(col=col, tfs=tfs, tfs_h=tfs_h)
-        X_test = self.get_features(col=col, tfs=tfs, tfs_h=tfs_h, train=False)
-        model.fit(X_train, self.get_target_gte(t=t))
+        y_train = self.get_target_gte(t=t)
+        if rows is None:
+            X_test = self.get_features(col=col, tfs=tfs, tfs_h=tfs_h, train=False)
+        else:
+            train = rows[0]
+            test = rows[1]
+            X_test = X_train[test,:]
+            X_train = X_train[train,:]
+            y_train = y_train[train]
+        model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
-        d = self.save_metrics(y_pred, t)
+        d = self.save_metrics(y_pred, t, rows=rows)
         return {t: d}
 
-    def model_classifier(self, model, col=None, tfs=False, tfs_h=False, val_range=xrange(1,7)):
+    def model_classifier(self, model, col=None, tfs=False, tfs_h=False, val_range=xrange(1,7), rows=None):
         d = {}
         for t in val_range:
-            d.update(self.train_classifier(model, col=col, tfs=tfs, tfs_h=tfs_h, t=t))
+            d.update(self.train_classifier(model, col=col, tfs=tfs, tfs_h=tfs_h, t=t, rows=rows))
         return pd.DataFrame.from_records(d).T
 
     def compare_models(self, models, model_tags, feature_tags, col=None, tfs=False, tfs_h=False, val_range=xrange(1,7)):
@@ -106,6 +118,20 @@ class HealthModel(object):
             temp['type'] = tag
             temp['features'] = f
             results.append(temp)
+        return pd.concat(results)
+
+    def k_fold_comparison(self, models, model_tags, feature_tags, col=None, tfs=False, tfs_h=False, val_range=[2]):
+        k_fold = KFold(self.df_train.shape[0], random_state=981)
+        results = []
+        for m, tag, f in zip(models, model_tags, feature_tags):
+            for k, k_ind in enumerate(k_fold):
+                temp = self.model_classifier(m, col=col, tfs=tfs, tfs_h=tfs_h, val_range=val_range, rows=k_ind)
+                temp.index.name=self.target
+                temp['model'] = str(m.__class__).strip("'>").split('.')[-1]
+                temp['type'] = tag 
+                temp['features'] = f
+                temp['k-fold'] = k
+                results.append(temp)
         return pd.concat(results)
 
     def grid_search_classifier(self, model, param_grid, col=None, tfs=False, tfs_h=False, scoring='f1', t=2):
