@@ -57,6 +57,11 @@ Below are the best model results for each combination of variables, reported on 
 - **TFIDF**: TFIDF matrix generated using review text.
 - **Prev. Inspec**: Variables looking at number of violations on previous inspections
 
+![Model Results](model_results.png?raw=true "Model Results")
+
+Summary: 
+- None of the yelp features add significant incremental value to models including the previous inspection history.
+- Of models without previous inspection history, the Linear SVC trained on only the TFIDF matrix has the best results.
 
 | FN  | FP   | TN   | TP  | accuracy | f1     | mse    | precision | recall  | model         | Yelp Summary | LDA Topics | TFIDF | Prev. Inspec |
 |-----|------|------|-----|----------|--------|--------|-----------|---------|---------------|--------------|------------|-------|--------------|
@@ -71,6 +76,3 @@ Below are the best model results for each combination of variables, reported on 
 | 465 | 1578 | 4444 | 560 | 0.7101   | 0.3541 | 0.2899 | 0.2619    | 0.5463  | Random Forest | 1            | 1          | 0     | 1            |
 | 487 | 1618 | 4404 | 538 | 0.7013   | 0.3383 | 0.2987 | 0.2495    | 0.5249  | Linear SVC    | 0            | 0          | 1     | 1            |
 
-Summary: 
-- None of the yelp features add significant incremental value to models including the previous inspection history.
-- Of models without previous inspection history, the Linear SVC trained on only the TFIDF matrix has the best results.
