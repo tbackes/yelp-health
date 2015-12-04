@@ -127,6 +127,8 @@ Here are the top 10 words associated with each of the 20 topics:
 | rude | lunch | wine | great | night | flavor | menu | toast | drink | didnt |
 | minut | soup | place | fresh | bartend | green | experi | potato | took | people |
 
+*Key*: **-** *BADREVIEW in top 10 words*; **---** *BADREVIEW IN top 2 words*; **+** *GOODREVIEW in top 10 words*; **+++** *GOODREVIEW in top 2 words*
+
 I did not have time to vary the LDA model parameters, so further work would be needed to select optimal values. Given more time, I would perform a grid search on all 4 parameters and optimize based on the f1 score of the resulting hygiene classification results.
 
 
