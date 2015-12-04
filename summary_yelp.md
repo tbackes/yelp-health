@@ -76,9 +76,67 @@ One of the challenges of modeling health inspection results with review data is 
 My initial implementation of this approach did not provide as much value as I'd hoped. There is certainly room for improvement, especially in tuning various parameters like the # of aspects, the initial seed words and the size of the final keyword list. However, I decided that my time would be best spent exploring other approaches, so I have not spent any time tuning the aspect segmentation results.
 
 #### CODEWORD LDA
-A previous Yelp Challenge winner (from )
+Jack Linshi, a previous Yelp Challenge winner (from Round 3), developed a modified version of Latent Dirichlet Allocation (LDA) that allows topics to be associated with an explicit sentiment. For more background on the approach, please refer to the [original paper](http://www.yelp.com/html/pdf/YelpDatasetChallengeWinner_PersonalizingRatings.pdf).
+
+The traditional input for LDA topic modeling is a term frequency matrix. Linshi's modified approach involves appending two columns to this matrix, associated with the "codewords" GOODREVIEW and BADREVIEW. GOODREVIEW corresponds to the frequency of all words in the review that are also found in a  positive sentiment list and BADREVIEW corresponds to words found in a negative sentiment list. Linshi demonstrated that the inclusion of these "good" and "bad" sentiment columns allows for LDA to associate sentiments to each topic.
+
+These are the steps I followed to process data for this approach:
+- Downloaded Bing Liu's [Opinion Lexicon](http://www.cs.uic.edu/~liub/FBS/opinion-lexicon-English.rar).
+    * negative-words.txt (4,783 words)
+    * positive-words.txt (2,006 words)
+- Stemmed the sentiment word lists using Porter Stemmer.
+- Calculated the term-frequency matrix for Phoenix, AZ Yelp reviews.
+- Determined the top 300 most common stemmed positive and negative words using Phoenix's term frequency matrix.
+- Appended sentiment columns to the term-frequency matrix:
+    * GOODREVIEW = sum of term frequencies for top 300 positive sentiment words.
+    * BADREVIEW = sum of term frequencies for top 300 negative sentiment words.
+
+I used python's [`lda`](https://pypi.python.org/pypi/lda) package to run lda on my modified term frequency matrix, using the following parameters.
+- 20 topics
+- 500 sampling iterations
+- alpha = 0.1 (parameter for distribution over topics)
+- eta = 0.01 (parameter for distribution over words)
+
+The fitted LDA model returns a document-topic matrix with point estimates of the topic distribution for each document. In my case, I modeled 20 topics so there were a total of 20 columns. This document-topic matrix became a set of features to use during classification. 
+
+Here are the top 10 words associated with each of the 20 topics:
+| 0             | 1               | 2                 | 3                     | 4             | 5           | 6                  | 7                   | 8                       | 9              |
+|---------------|-----------------|-------------------|-----------------------|---------------|-------------|--------------------|---------------------|-------------------------|----------------|
+| Asian         | Café - Positive | Italian           | Experience - Negative | BBQ           | Fine Dining | Seafood - Negative | Mexican             | Quality - BAD           | Service - GOOD |
+| thai          | coffe           | pizza             | always                | bbq           | steak       | fish               | taco                | BADREVIEW               | GOODREVIEW     |
+| chicken       | ice             | crust             | locat                 | chicken       | dinner      | shrimp             | salsa               | bad                     | great          |
+| rice          | tea             | italian           | time                  | rib           | dessert     | fri                | mexican             | tast                    | food           |
+| pho           | cream           | pasta             | ive                   | wing          | birthday    | seafood            | burrito             | food                    | service        |
+| soup          | vegan           | salad             | year                  | pork          | rib         | crab               | chip                | bland                   | good           |
+| chines        | buffet          | wing              | BADREVIEW             | sauc          | great       | BADREVIEW          | bean                | star                    | veri           |
+| noodl         | GOODREVIEW      | chees             | food                  | fri           | wine        | sauc               | tortilla            | ok                      | friendli       |
+| dish          | dessert         | sauc              | ha                    | brisket       | salad       | lobster            | enchilada           | price                   | staff          |
+| curri         | indian          | slice             | servic                | chees         | night       | oyster             | margarita           | wasn’t                  | price          |
+| roll          | pasti           | pie               | love                  | mac           | filet       | clam               | carn                | dri                     | clean          |
+|               |                 |                   |                       |               |             |                    |                     |                         |                |
+| 10            | 11              | 12                | 13                    | 14            | 15          | 16                 | 17                  | 18                      | 19             |
+|---------------|-----------------|-------------------|-----------------------|---------------|-------------|--------------------|---------------------|-------------------------|----------------|
+| Service - BAD | Lunch           | Experience - GOOD | Sushi - positive      | Bar/Nightlife | Food        | Location           | American - Negative | Service/Wait - Negative | General - BAD  |
+| manag         | sandwich        | great             | sushi                 | beer          | salad       | restaur            | burger              | tabl                    | BADREVIEW      |
+| BADREVIEW     | salad           | GOODREVIEW        | roll                  | bar           | chees       | tabl               | breakfast           | minut                   | dont           |
+| order         | chicken         | love              | hour                  | drink         | bread       | dine               | fri                 | wait                    | know           |
+| custom        | pita            | amaz              | happi                 | great         | tomato      | park               | egg                 | order                   | walk           |
+| ask           | gyro            | servic            | tuna                  | game          | chicken     | seat               | bacon               | seat                    | tabl           |
+| told          | bread           | food              | price                 | hour          | sauc        | locat              | dog                 | server                  | just           |
+| said          | bagel           | atmosphere        | GOODREVIEW            | music         | sweet       | phoenix            | BADREVIEW           | BADREVIEW               | im             |
+| card          | sub             | staff             | fish                  | patio         | dish        | area               | pancak              | ask                     | guy            |
+| rude          | lunch           | wine              | great                 | night         | flavor      | menu               | toast               | drink                   | didnt          |
+| minut         | soup            | place             | fresh                 | bartend       | green       | experi             | potato              | took                    | people         |
+
+I did not have time to vary the LDA model parameters, so further work would be needed to select optimal values. Given more time, I would perform a grid search on all 4 parameters and optimize based on the f1 score of the resulting hygiene classification results.
+
 
 
 ## References
 Wang, Hongning, Yue Lu, and Chengxiang Zhai. "Latent aspect rating analysis on review text data: a rating regression approach." Proceedings of the 16th ACM SIGKDD international conference on Knowledge discovery and data mining. ACM, 2010.
+
+Linshi, Jack. "Personalizing Yelp Star Ratings: a Semantic Topic Modeling Approach." Yelp Challenge Round 3 Winner. http://www.yelp.com/html/pdf/YelpDatasetChallengeWinner_PersonalizingRatings.pdf
+
+Bing Liu, Minqing Hu and Junsheng Cheng. "Opinion Observer: Analyzing and Comparing Opinions on the Web." Proceedings of the 14th International World Wide Web conference (WWW-2005), May 10-14, 2005, Chiba, Japan.
+
 
