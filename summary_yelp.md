@@ -100,33 +100,32 @@ I used python's [`lda`](https://pypi.python.org/pypi/lda) package to run lda on 
 The fitted LDA model returns a document-topic matrix with point estimates of the topic distribution for each document. In my case, I modeled 20 topics so there were a total of 20 columns. This document-topic matrix became a set of features to use during classification. 
 
 Here are the top 10 words associated with each of the 20 topics:
-| 0             | 1               | 2                 | 3                     | 4             | 5           | 6                  | 7                   | 8                       | 9              |
+
+| Asian | Café + | Italian | Experience - | BBQ | Fine Dining | Seafood - | Mexican | Quality --- | Service +++ |
 |---------------|-----------------|-------------------|-----------------------|---------------|-------------|--------------------|---------------------|-------------------------|----------------|
-| Asian         | Café - Positive | Italian           | Experience - Negative | BBQ           | Fine Dining | Seafood - Negative | Mexican             | Quality - BAD           | Service - GOOD |
-| thai          | coffe           | pizza             | always                | bbq           | steak       | fish               | taco                | BADREVIEW               | GOODREVIEW     |
-| chicken       | ice             | crust             | locat                 | chicken       | dinner      | shrimp             | salsa               | bad                     | great          |
-| rice          | tea             | italian           | time                  | rib           | dessert     | fri                | mexican             | tast                    | food           |
-| pho           | cream           | pasta             | ive                   | wing          | birthday    | seafood            | burrito             | food                    | service        |
-| soup          | vegan           | salad             | year                  | pork          | rib         | crab               | chip                | bland                   | good           |
-| chines        | buffet          | wing              | BADREVIEW             | sauc          | great       | BADREVIEW          | bean                | star                    | veri           |
-| noodl         | GOODREVIEW      | chees             | food                  | fri           | wine        | sauc               | tortilla            | ok                      | friendli       |
-| dish          | dessert         | sauc              | ha                    | brisket       | salad       | lobster            | enchilada           | price                   | staff          |
-| curri         | indian          | slice             | servic                | chees         | night       | oyster             | margarita           | wasn’t                  | price          |
-| roll          | pasti           | pie               | love                  | mac           | filet       | clam               | carn                | dri                     | clean          |
-|               |                 |                   |                       |               |             |                    |                     |                         |                |
-| 10            | 11              | 12                | 13                    | 14            | 15          | 16                 | 17                  | 18                      | 19             |
+| thai | coffe | pizza | always | bbq | steak | fish | taco | BADREVIEW | GOODREVIEW |
+| chicken | ice | crust | locat | chicken | dinner | shrimp | salsa | bad | great |
+| rice | tea | italian | time | rib | dessert | fri | mexican | tast | food |
+| pho | cream | pasta | ive | wing | birthday | seafood | burrito | food | service |
+| soup | vegan | salad | year | pork | rib | crab | chip | bland | good |
+| chines | buffet | wing | BADREVIEW | sauc | great | BADREVIEW | bean | star | veri |
+| noodl | GOODREVIEW | chees | food | fri | wine | sauc | tortilla | ok | friendli |
+| dish | dessert | sauc | ha | brisket | salad | lobster | enchilada | price | staff |
+| curri | indian | slice | servic | chees | night | oyster | margarita | wasn’t | price |
+| roll | pasti | pie | love | mac | filet | clam | carn | dri | clean |
+
+| Service --- | Lunch | Experience +++ | Sushi - | Bar/Nightlife | Food | Location | American - | Service/Wait - | General --- |
 |---------------|-----------------|-------------------|-----------------------|---------------|-------------|--------------------|---------------------|-------------------------|----------------|
-| Service - BAD | Lunch           | Experience - GOOD | Sushi - positive      | Bar/Nightlife | Food        | Location           | American - Negative | Service/Wait - Negative | General - BAD  |
-| manag         | sandwich        | great             | sushi                 | beer          | salad       | restaur            | burger              | tabl                    | BADREVIEW      |
-| BADREVIEW     | salad           | GOODREVIEW        | roll                  | bar           | chees       | tabl               | breakfast           | minut                   | dont           |
-| order         | chicken         | love              | hour                  | drink         | bread       | dine               | fri                 | wait                    | know           |
-| custom        | pita            | amaz              | happi                 | great         | tomato      | park               | egg                 | order                   | walk           |
-| ask           | gyro            | servic            | tuna                  | game          | chicken     | seat               | bacon               | seat                    | tabl           |
-| told          | bread           | food              | price                 | hour          | sauc        | locat              | dog                 | server                  | just           |
-| said          | bagel           | atmosphere        | GOODREVIEW            | music         | sweet       | phoenix            | BADREVIEW           | BADREVIEW               | im             |
-| card          | sub             | staff             | fish                  | patio         | dish        | area               | pancak              | ask                     | guy            |
-| rude          | lunch           | wine              | great                 | night         | flavor      | menu               | toast               | drink                   | didnt          |
-| minut         | soup            | place             | fresh                 | bartend       | green       | experi             | potato              | took                    | people         |
+| manag | sandwich | great | sushi | beer | salad | restaur | burger | tabl | BADREVIEW |
+| BADREVIEW | salad | GOODREVIEW | roll | bar | chees | tabl | breakfast | minut | dont |
+| order | chicken | love | hour | drink | bread | dine | fri | wait | know |
+| custom | pita | amaz | happi | great | tomato | park | egg | order | walk |
+| ask | gyro | servic | tuna | game | chicken | seat | bacon | seat | tabl |
+| told | bread | food | price | hour | sauc | locat | dog | server | just |
+| said | bagel | atmosphere | GOODREVIEW | music | sweet | phoenix | BADREVIEW | BADREVIEW | im |
+| card | sub | staff | fish | patio | dish | area | pancak | ask | guy |
+| rude | lunch | wine | great | night | flavor | menu | toast | drink | didnt |
+| minut | soup | place | fresh | bartend | green | experi | potato | took | people |
 
 I did not have time to vary the LDA model parameters, so further work would be needed to select optimal values. Given more time, I would perform a grid search on all 4 parameters and optimize based on the f1 score of the resulting hygiene classification results.
 
