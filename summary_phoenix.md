@@ -32,39 +32,45 @@ After merging with the yelp business database:
 
 The target (i.e. dependent variable) is based on `# Violations - Priority`.
 - For classification modeling, thresholds from t = 1 to 6 were evaluated to create a binary target.
-- For regression modeling, the total number of violations was used as the target.
+- I ended up using t = 2 as my final binary target (i.e., Unhealthy Restaurants = 2+ Priority Violations)
+	* Under Maricopa County's [voluntary rating program](http://www.maricopa.gov/ENVSVC/EnvHealth/PermitScoring.aspx), 2+ priority violations result in a rating of C or D.
+	* It would be interesting to explore a multiclass problem with targets of 0, 1, 2+ priority violations. (I would avoid more granular targets, as the counts become very low at 3+ priority violations).
+
+## Feature Generation:
+
+Features generated using yelp data are described [here](https://github.com/tbackes/yelp-health/blob/master/summary_yelp.md).
+
+Additional features were generated using previous inspection history. 
+- The following summary variables were generated over three time frames: Previous Inspection, Previous 2 Inspections, All Previous Inspections
+- Avg # Priority Violations
+- Avg # Priority Foundation Violations
+- Avg # Core Violations
 
 ## Classification Modeling:
-These are the initial untuned models that were tested using model classes from `sklearn`:
-```
-model_rfc = RandomForestClassifier(oob_score=True, 
-                                   random_state = 981, 
-                                   class_weight='balanced')
-model_log = LogisticRegression()
-model_svc = LinearSVC(C=0.19, random_state = 981, class_weight='balanced')
-```
+I used both the `RandomForestClassifier` and `LinearSVC` model classes from `sklearn` for classification modeling. This is an unbalanced class problem (Unhealth restaurants represent ~15% of the population). To account for this during the modeling process:
+- I set `class_weight = balanced`
+- I used the f1 score for optimization
 
-With only basic features `Review Count, Negative Review Count, Avg Rating, Avg Length of Review, Variance of Ratings`, we saw the following results:
+Below are the best model results for each combination of variables, reported on a 25% holdout validation sample:
+- **Yelp Summary**: Revew Count, Negative Review Count, Avg Rating, Rating Variance, Avg Review Length
+- **LDA Topics**: Topic distribution probabilities for 20 topics generated using [LDA-codeword analysis](https://github.com/tbackes/yelp-health/blob/master/summary_yelp.md)
+- **TFIDF**: TFIDF matrix generated using review text.
+- **Prev. Inspec**: Variables looking at number of violations on previous inspections
 
-|              | FN   | FP   | TN   | TP   | accuracy | f1       | mse       | precision | recall   | model                  |
-|--------------|------|------|------|------|----------|----------|-----------|-----------|----------|----------------------- |
-| sum_priority |      |      |      |      |          |          |           |           |          |                        |
-| 1            | 2457 | 1817 | 3675 | 1446 | 0.545077 | 0.403572 | 0.454923  | 0.443150  | 0.370484 | RandomForestClassifier |
-| 2            | 1253 | 608  | 7417 | 117  | 0.801916 | 0.111695 | 0.198084  | 0.161379  | 0.085401 | RandomForestClassifier |
-| 3            | 430  | 120  | 8835 | 10   | 0.941458 | 0.035088 | 0.058542  | 0.076923  | 0.022727 | RandomForestClassifier |
-| 4            | 124  | 29   | 9239 | 3    | 0.983715 | 0.037736 | 0.016285  | 0.093750  | 0.023622 | RandomForestClassifier |
-| 5            | 35   | 12   | 9348 | 0    | 0.994997 | 0.000000 | 0.005003  | 0.000000  | 0.000000 | RandomForestClassifier |
-| 6            | 10   | 4    | 9381 | 0    | 0.998510 | 0.000000 | 0.001490  | 0.000000  | 0.000000 | RandomForestClassifier |
-| 1            | 3822 | 88   | 5404 | 81   | 0.583821 | 0.039784 | 0.416179  | 0.479290  | 0.020753 | LogisticRegression     |
-| 2            | 1370 | 0    | 8025 | 0    | 0.854178 | 0.000000 | 0.145822  | 0.000000  | 0.000000 | LogisticRegression     |
-| 3            | 440  | 0    | 8955 | 0    | 0.953167 | 0.000000 | 0.046833  | 0.000000  | 0.000000 | LogisticRegression     |
-| 4            | 127  | 0    | 9268 | 0    | 0.986482 | 0.000000 | 0.013518  | 0.000000  | 0.000000 | LogisticRegression     |
-| 5            | 35   | 0    | 9360 | 0    | 0.996275 | 0.000000 | 0.003725  | 0.000000  | 0.000000 | LogisticRegression     |
-| 6            | 10   | 0    | 9385 | 0    | 0.998936 | 0.000000 | 0.001064  | 0.000000  | 0.000000 | LogisticRegression     |
-| 1            | 3903 | 0    | 5492 | 0    | 0.584566 | 0.000000 | 0.415434  | 0.000000  | 0.000000 | LinearSVC              |
-| 2            | 1370 | 0    | 8025 | 0    | 0.854178 | 0.000000 | 0.145822  | 0.000000  | 0.000000 | LinearSVC              |
-| 3            | 440  | 0    | 8955 | 0    | 0.953167 | 0.000000 | 0.046833  | 0.000000  | 0.000000 | LinearSVC              |
-| 4            | 127  | 0    | 9268 | 0    | 0.986482 | 0.000000 | 0.013518  | 0.000000  | 0.000000 | LinearSVC              |
-| 5            | 35   | 0    | 9360 | 0    | 0.996275 | 0.000000 | 0.003725  | 0.000000  | 0.000000 | LinearSVC              |
-| 6            | 10   | 0    | 9385 | 0    | 0.998936 | 0.000000 | 0.001064  | 0.000000  | 0.000000 | LinearSVC              |
 
+| FN  | FP   | TN   | TP  | accuracy | f1     | mse    | precision | recall  | model         | Yelp Summary | LDA Topics | TFIDF | Prev. Inspec |
+|-----|------|------|-----|----------|--------|--------|-----------|---------|---------------|--------------|------------|-------|--------------|
+| 507 | 2629 | 3393 | 518 | 0.5550   | 0.2483 | 0.4450 | 0.1646    | 0.5054  | Random Forest | 1            | 0          | 0     | 0            |
+| 508 | 2347 | 3675 | 517 | 0.5949   | 0.2659 | 0.4051 | 0.1805    | 0.50440 | Random Forest | 0            | 1          | 0     | 0            |
+| 511 | 2255 | 3767 | 514 | 0.6075   | 0.2710 | 0.3925 | 0.1856    | 0.5015  | Random Forest | 1            | 1          | 0     | 0            |
+| 484 | 2184 | 3838 | 541 | 0.6214   | 0.2885 | 0.3786 | 0.1985    | 0.5278  | Linear SVC    | 0            | 0          | 1     | 0            |
+| 474 | 2236 | 3786 | 551 | 0.6154   | 0.2891 | 0.3846 | 0.1977    | 0.5376  | Linear SVC    | 0            | 1          | 1     | 0            |
+| 513 | 2082 | 3940 | 512 | 0.6318   | 0.2830 | 0.3682 | 0.1974    | 0.4995  | Linear SVC    | 1            | 1          | 1     | 0            |
+| 478 | 1529 | 4493 | 547 | 0.7152   | 0.3528 | 0.2848 | 0.2635    | 0.5337  | Random Forest | 0            | 0          | 0     | 1            |
+| 472 | 1568 | 4454 | 553 | 0.7105   | 0.3516 | 0.2895 | 0.2607    | 0.5395  | Random Forest | 0            | 1          | 0     | 1            |
+| 465 | 1578 | 4444 | 560 | 0.7101   | 0.3541 | 0.2899 | 0.2619    | 0.5463  | Random Forest | 1            | 1          | 0     | 1            |
+| 487 | 1618 | 4404 | 538 | 0.7013   | 0.3383 | 0.2987 | 0.2495    | 0.5249  | Linear SVC    | 0            | 0          | 1     | 1            |
+
+Summary: 
+- None of the yelp features add significant incremental value to models including the previous inspection history.
+- Of models without previous inspection history, the Linear SVC trained on only the TFIDF matrix has the best results.
